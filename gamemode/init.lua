@@ -63,6 +63,8 @@ end
 function GM:PlayerShouldTakeDamage(ply, attacker)
 	if ply:Team() == TEAM_LOBBY then return false end
 	if attacker:IsPlayer() and attacker:Team() ~= ply:Team() then return false end
+
+	return true
 end
 
 -- Called when a player spawns for the first time
