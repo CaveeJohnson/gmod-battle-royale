@@ -1,0 +1,17 @@
+"gmod-battle-royale"
+{
+	"base"		"base"
+	"title"		"Battle Royale"
+	"version"	"0"
+	"description"	"Fight using sticks until one person dies."
+
+	"author_name"	"hexahedronic"
+	"author_url"	"http://hexahedronic.org/, http://hexahedronic.github.io/"
+
+	"icon"		""
+	"info"		""
+	"hide"		"0"
+	"menusystem"	"1"
+
+	"selectable"	"1"
+}

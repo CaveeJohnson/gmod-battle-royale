@@ -11,9 +11,11 @@ game.ConsoleCommand("sv_alltalk 1\n")
 
 -- Net Messages, seems like a lot since they also replace umsgs (umsg is deprecated)
 do
-	util.AddNetworkString("br_roundTime")
+	util.AddNetworkString("br_roundState")
 	util.AddNetworkString("br_greenZone")
+
 	util.AddNetworkString("br_playerDeath")
+	util.AddNetworkString("br_victor")
 end
 
 -- Called when the server initializes.
@@ -50,3 +52,32 @@ function GM:PlayerCanHearPlayersVoice(listener, player)
 	-- Cant hear.
 	return false
 end
+
+-- Called every tick
+function GM:Think()
+	self:RoundTick()
+end
+
+-- Called when a player spawns for the first time
+function GM:PlayerInitialSpawn(ply)
+	ply:SetTeam(TEAM_LOBBY)
+	ply.playerModel = table.Random(self.Config.Playermodels)
+end
+
+-- Called when a player spawns
+function GM:PlayerSpawn(ply)
+	ply:SetModel(ply.playerModel)
+end
+
+-- Called when a player has died.
+function GM:PostPlayerDeath(ply)
+	if ply:Team() ~= TEAM_ALIVE then return end
+	self:CheckForRoundEnd()
+
+	net.Start("br_playerDeath")
+		net.WriteEntity(ply)
+	net.Broadcast()
+
+	ply:SetTeam(TEAM_LOBBY)
+end
+
