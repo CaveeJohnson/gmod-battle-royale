@@ -1,0 +1,8 @@
+- Round system
+- Random Spawns
+- Lobby area / Spectating
+- Weapon Spawning
+- Green zone
+
+- Inventory
+-
