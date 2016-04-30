@@ -1,8 +1,34 @@
-- Round system
-- Random Spawns
-- Lobby area / Spectating
-- Weapon Spawning
-- Green zone
+[X] = Complete.
+[#] = Partialy complete.
+[-] = Unconfirmed.
+[ ] = Confirmed but uncomplete.
 
-- Inventory
--
+- MAIN
+[X] Round system
+[ ] Random Spawns
+[#] Lobby area
+[ ] Weapons
+[ ] Misc. items
+[#] Green zone
+[ ] Spectator mode
+
+
+- HUD
+[ ] Health/ammo
+[ ] Killfeed
+[ ] Scoreboard
+
+
+- UTIL
+[ ] Inventory
+[ ] End round rewards (The better you finish, the more chance of rare)
+
+
+
+Untidy todo
+- Green zone damage
+- Green zone size
+- Green zone size change (Lerp)
+- Add lobby spawnpoints
+- Add weapons
+- Add items (flashlight, medkit, compass that points to nearest player(?))
