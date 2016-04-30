@@ -1,4 +1,5 @@
 include("sh_init.lua")
+include("sv_rounds.lua")
 
 -- Enable realistic fall damage for this gamemode.
 game.ConsoleCommand("mp_falldamage 1\n")
