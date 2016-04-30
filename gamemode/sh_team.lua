@@ -18,7 +18,7 @@ end
 
 function GM:MakeEveryoneParticipate()
 	for k, v in ipairs(player.GetAll()) do
-		self:TogglePlayerParticipating(v)
+		self:SetPlayerParticipating(v, true)
 	end
 end
 
