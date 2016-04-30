@@ -132,6 +132,8 @@ end
 
 -- Used to check if the round is ready to end.
 function GM:CheckForRoundEnd()
+	if self.roundState ~= ROUND_ONGOING then return end
+
 	local alivePlayers = team.GetPlayers(TEAM_ALIVE)
 
 	for k, v in ipairs(alivePlayers) do
@@ -149,3 +151,6 @@ function GM:PlayerDisconnected()
 	timer.Simple(0.1, function() self:CheckForRoundEnd() end)
 end
 
+timer.Create("br_round_fallback", 5, 0, function()
+	GAMEMODE:CheckForRoundEnd()
+end)

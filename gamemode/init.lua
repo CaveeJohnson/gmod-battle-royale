@@ -75,6 +75,36 @@ function GM:PlayerInitialSpawn(ply)
 	self:SendRoundInfoToPlayer(ply)
 end
 
+local spawnClasses = {
+	["info_player_deathmatch"] = true,
+	["info_player_rebel"] = true,
+	["gmod_player_start"] = true,
+	["info_player_start"] = true,
+	["info_player_allies"] = true,
+	["info_player_axis"] = true,
+	["info_player_counterterrorist"] = true,
+	["info_player_terrorist"] = true,
+}
+
+function GM:InitPostEntity()
+	local spawns = self.Config.LobbySpawns[game.GetMap()]
+	if spawns then
+		for k, v in ipairs(ents.GetAll()) do
+			if spawnClasses[v:GetClass()] then
+				v:Remove()
+			end
+		end
+
+		for k, v in ipairs(spawns) do
+			local s = ents.Create("info_player_start")
+				s:SetPos(v)
+				s:SetMoveType(MOVETYPE_NONE)
+			s:Spawn()
+			s:Activate()
+		end
+	end
+end
+
 -- Called when a player spawns
 function GM:PlayerSpawn(ply)
 	ply:SetModel(ply.playerModel)

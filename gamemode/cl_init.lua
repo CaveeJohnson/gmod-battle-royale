@@ -10,6 +10,38 @@ if GM.nextRoundState then
 	GM.lastVictor = game.GetWorld()
 end
 
+GM.Materials = GM.Materials or {Replaced = {}}
+local function materialReplace(from, to)
+	local mat = Material(from)
+
+	if not mat:IsError() then
+		local typ = type(to)
+		local tex
+
+		if (typ == "string") then
+			tex = Material(to):GetTexture("$basetexture")
+		elseif (typ == "ITexture") then
+			tex = to
+		elseif (typ == "Material") then
+			tex = to:GetTexture("$basetexture")
+		else
+			return
+		end
+
+		GM.Materials.Replaced[from] = GM.Materials.Replaced[path] or {}
+		GM.Materials.Replaced[from].OldTexture = GM.Materials.Replaced[from].OldTexture or mat:GetTexture("$basetexture")
+		GM.Materials.Replaced[from].NewTexture = tex
+
+		mat:SetTexture("$basetexture", tex)
+	end
+end
+
+function GM:InitPostEntity()
+	materialReplace("IMS/BANNER","METAL/METALFLOOR003A")
+end
+
+materialReplace("IMS/BANNER","METAL/METALFLOOR003A")
+
 net.Receive("br_roundState", function()
 	GAMEMODE.roundState = net.ReadUInt(4)
 	GAMEMODE.nextRoundState = net.ReadUInt(32)
