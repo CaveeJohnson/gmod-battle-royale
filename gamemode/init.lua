@@ -7,7 +7,6 @@ game.ConsoleCommand("sbox_godmode 0\n")
 
 -- Enable local chat for this gamemode.
 game.ConsoleCommand("sv_voiceenable 1\n")
-game.ConsoleCommand("sv_alltalk 1\n")
 
 -- Net Messages, seems like a lot since they also replace umsgs (umsg is deprecated)
 do
@@ -42,6 +41,9 @@ local radius = GM.Config.VoiceRadius ^ 2
 function GM:PlayerCanHearPlayersVoice(listener, player)
 	if not (player:IsValid() and listener:IsValid()) then return end
 
+	if player:Team() ~= listener:Team() then return false end
+	if player:Team() == TEAM_LOBBY then return true end
+
 	local distToSqr = player:GetPos():DistToSqr(listener:GetPos())
 
 	-- Can hear if alive, close to us, and conscious.
@@ -58,15 +60,25 @@ function GM:Think()
 	self:RoundTick()
 end
 
+function GM:PlayerShouldTakeDamage(ply, attacker)
+	if ply:Team() == TEAM_LOBBY then return false end
+	if attacker:IsPlayer() and attacker:Team() ~= ply:Team() then return false end
+end
+
 -- Called when a player spawns for the first time
 function GM:PlayerInitialSpawn(ply)
 	ply:SetTeam(TEAM_LOBBY)
 	ply.playerModel = table.Random(self.Config.Playermodels)
+
+	self:SendRoundInfoToPlayer(ply)
 end
 
 -- Called when a player spawns
 function GM:PlayerSpawn(ply)
 	ply:SetModel(ply.playerModel)
+	ply:SetCanZoom(ply:Team() == TEAM_LOBBY)
+
+	return self.BaseClass:PlayerSpawn(ply)
 end
 
 -- Called when a player has died.
@@ -79,5 +91,12 @@ function GM:PostPlayerDeath(ply)
 	net.Broadcast()
 
 	ply:SetTeam(TEAM_LOBBY)
+	self:SetPlayerParticipating(ply, false)
+end
+
+function GM:ShowTeam(ply)
+	if ply:Team() == TEAM_LOBBY and self.roundState == ROUND_READY then
+		self:TogglePlayerParticipating(ply)
+	end
 end
 

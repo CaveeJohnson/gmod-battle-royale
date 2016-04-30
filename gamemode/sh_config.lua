@@ -5,7 +5,7 @@ GM.Config = {}
 GM.Config.VoiceRadius = 300
 
 GM.Config.RoundReadyTime = 20
-GM.Config.RoundOverTime = 20
+GM.Config.RoundOverTime = 30
 
 GM.Config.Playermodels = {
 	"models/player/group01/male_01.mdl",
@@ -24,3 +24,9 @@ GM.Config.Playermodels = {
 	"models/player/group01/female_05.mdl",
 	"models/player/group01/female_06.mdl",
 }
+
+GM.Config.MinimumPlayers = 2
+
+GM.Config.ReduceGreenzone = 250
+GM.Config.ReduceGreenzoneTime = 90
+GM.Config.DefaultGZRadius = 1500
