@@ -132,3 +132,9 @@ function GM:ShowTeam(ply)
 	end
 end
 
+function GM:CheckPassword(steamID64, ipAddress, svPassword, clPassword, name)
+	if self.Config.AntiRetard and clPassword:lower() ~= "iamnotretarded" then
+		return false, "This is a TEST server, if you know what you are doing type\n    'password iamnotretarded'\ninto your console."
+	end
+end
+

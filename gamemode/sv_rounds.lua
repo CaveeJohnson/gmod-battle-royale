@@ -5,8 +5,66 @@ if not GM.roundState then
 	GM.greenzoneOrigin = Vector(0, 0, 0)
 	GM.greenzoneRadius = 2000
 	GM.nextGreenZoneReduce = 0
+	GM.greenzoneReduce = GM.Config.ReduceGreenzone
 
 	GM.prevVictor = game.GetWorld()
+end
+
+local spawnbox = GM.Config.BattleSpawnBox[game.GetMap()]
+function GM:GenerateGreenzoneOrigin()
+	self.greenzoneRadius = self.Config.DefaultGZRadius
+	self.greenzoneOrigin = Vector(0, 0, 0)
+	self.greenzoneReduce = self.Config.ReduceGreenzone
+
+	if not spawnbox then return end
+
+	local mi = spawnbox.min
+	local ma = spawnbox.max
+
+	local x, y, z = math.floor(mi.x + ma.x) / 2, math.floor(mi.y + ma.y) / 2
+	local w, h = math.max(mi.x, ma.x) - math.min(mi.x, ma.x), math.max(mi.y, ma.y) - math.min(mi.y, ma.y)
+
+	self.greenzoneOrigin = Vector(x, y, 0)
+
+	local rad = math.max(w, h)
+
+	self.greenzoneRadius = rad
+	self.greenzoneReduce = rad / (self.Config.RoundTargetTime + 1)
+end
+
+function GM:GetRandomLocationInSpawnbox(ply)
+	if not spawnbox then return end
+
+	local mi = spawnbox.min
+	local ma = spawnbox.max
+
+	local success, loc
+
+	-- This very strange loop structure tries to reduce the chances of someone spawning inside someone else.
+	for i = 1, 10 do
+		success = true
+
+		local x, y, z = math.random(mi.x, ma.x), math.random(mi.y, ma.y), math.min(mi.z, ma.z)
+		loc = Vector(x, y, z)
+
+		for k, v in ipairs(player.GetAll()) do
+			if v == ply or v:Team() ~= TEAM_ALIVE then continue end
+
+			local p = v:GetPos()
+
+			if p:IsEqualTol(loc, 32) then
+				success = false
+
+				break
+			end
+		end
+
+		if success then
+			break
+		end
+	end
+
+	return loc
 end
 
 function GM:ReduceGreenzoneRadius(radius, delay)
@@ -24,7 +82,7 @@ function GM:RoundTick()
 		if self.nextGreenZoneReduce < CurTime() then
 			print("reduce greenzone")
 
-			self:ReduceGreenzoneRadius(self.Config.ReduceGreenzone, self.Config.ReduceGreenzoneTime)
+			self:ReduceGreenzoneRadius(self.greenzoneReduce, self.Config.ReduceGreenzoneTime)
 		end
 	return end
 
@@ -41,8 +99,9 @@ function GM:RoundTick()
 		print("state is ready, ACTUALLY STARTING")
 
 		self:SetRoundState(ROUND_ONGOING)
-		self.greenzoneRadius = self.Config.DefaultGZRadius
-		self.nextGreenZoneReduce = 0
+		self:GenerateGreenzoneOrigin()
+
+		self.nextGreenZoneReduce = CurTime() + self.Config.ReduceGreenzoneTime
 
 		for k, v in ipairs(part) do
 			v:KillSilent()
@@ -56,21 +115,17 @@ end
 
 function GM:PositionPlayer(ply)
 	print("setup player")
-	-- TODO
-	ply:Give("weapon_pistol")
-end
 
-function GM:PlayerInGreenzone(ply)
-	local p = ply:GetPos()
-	local zone = self.greenzoneOrigin
-	local r = self.greenzoneRadius
+	local loc = self:GetRandomLocationInSpawnbox(ply)
+	if loc then
+		ply:SetPos(loc)
+		ply:GodEnable()
 
-	if p.x > zone.x + r or p.x < zone.x - r
-	or p.y > zone.y + r or p.y < zone.y - r then
-		return false
+		timer.Simple(10, function() if IsValid(ply) then ply:GodDisable() end end)
 	end
 
-	return true
+	-- TODO
+	ply:Give("weapon_pistol")
 end
 
 function GM:SendRoundInfoToPlayer(ply)

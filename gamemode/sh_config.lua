@@ -27,9 +27,12 @@ GM.Config.Playermodels = {
 
 GM.Config.MinimumPlayers = 2
 
-GM.Config.ReduceGreenzone = 250
-GM.Config.ReduceGreenzoneTime = 90
+GM.Config.ReduceGreenzone = 500
+GM.Config.ReduceGreenzoneTime = 60
 GM.Config.DefaultGZRadius = 1500
+
+-- 15 mins divided by the interval
+GM.Config.RoundTargetTime = (15 * 60) / GM.Config.ReduceGreenzoneTime
 
 GM.Config.LobbySpawns = {
 	["rp_stalker_v2"] = {
@@ -56,3 +59,13 @@ GM.Config.LobbySpawns = {
 		[20] = Vector ( 8927.9921875   , -4171.900390625 , -2495.96875     )
 	},
 }
+
+GM.Config.BattleSpawnBox = {
+	["rp_stalker_v2"] = {
+		-- Computer generated locations.
+		min = Vector ( 11135.95703125  , -13183.491210938 ,   5271.6689453125),
+		max = Vector (- 5934.8579101563,  10461.547851563 ,   7659.3012695313),
+	},
+}
+
+GM.Config.AntiRetard = true

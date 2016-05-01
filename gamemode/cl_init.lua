@@ -113,7 +113,22 @@ function GM:HUDPaint()
 		surface.DrawRect(x - 4, y - h * 2 + 2, w + 8, h * 2 + 2)
 
 		draw.SimpleTextOutlined(reducing, hudFont .. "_small", x, y - 22, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, color_black)
-		draw.SimpleTextOutlined(string.ToMinutesSeconds(self.nextGreenZoneReduce - CurTime()), hudFont .. "_small", x, y, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, color_black)
+
+		local reducing_time = string.ToMinutesSeconds(math.max(self.nextGreenZoneReduce - CurTime(), 0))
+		draw.SimpleTextOutlined(reducing_time, hudFont .. "_small", x, y, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, color_black)
+
+		if not self:PlayerInGreenzone(ply) then
+			local text = "RETURN TO THE GREEN ZONE IMMEDIATELY!"
+
+			surface.SetFont(hudFont)
+			local w, h = surface.GetTextSize(text)
+			local x, y = ScrW() / 2, ScrH() / 2
+
+			surface.SetDrawColor(color_tblack)
+			surface.DrawRect(x - w / 2 - 4, y - h / 2, w + 8, h + 4)
+
+			draw.SimpleTextOutlined(text, hudFont, x, y, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, color_black)
+		end
 	return end
 
 	local x, y = ScrW() / 2, 40
@@ -165,13 +180,14 @@ function GM:HUDPaint()
 end
 
 local greenMat = Material("gm_construct/color_room", "smooth noclamp")
-greenMat:SetFloat("$alpha", 0.2)
-
 local ang, col = Angle(0, 0, 0), Color(50, 180, 50, 255)
+
 function GM:PostDrawTranslucentRenderables()
 	local ply = LocalPlayer()
 
 	if ply:Team() == TEAM_ALIVE then
+		greenMat:SetFloat("$alpha", 0.2)
+
 		cam.Start3D()
 			render.SetMaterial(greenMat)
 
