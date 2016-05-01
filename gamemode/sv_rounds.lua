@@ -68,7 +68,7 @@ function GM:GetRandomLocationInSpawnbox(ply)
 end
 
 function GM:ReduceGreenzoneRadius(radius, delay)
-	self.greenzoneRadius = math.max(self.greenzoneRadius - radius, 100)
+	self.greenzoneRadius = math.max(self.greenzoneRadius - radius, 0)
 	self.nextGreenZoneReduce = CurTime() + delay
 
 	net.Start("br_greenZone")
@@ -98,10 +98,10 @@ function GM:RoundTick()
 
 		print("state is ready, ACTUALLY STARTING")
 
-		self:SetRoundState(ROUND_ONGOING)
-		self:GenerateGreenzoneOrigin()
-
 		self.nextGreenZoneReduce = CurTime() + self.Config.ReduceGreenzoneTime
+
+		self:GenerateGreenzoneOrigin()
+		self:SetRoundState(ROUND_ONGOING)
 
 		for k, v in ipairs(part) do
 			v:KillSilent()
@@ -156,6 +156,11 @@ function GM:SetRoundState(state, time)
 		net.WriteUInt(state, 4)
 		net.WriteUInt(self.nextRoundState, 32)
 		net.WriteVector(self.greenzoneOrigin)
+	net.Broadcast()
+
+	net.Start("br_greenZone")
+		net.WriteUInt(self.greenzoneRadius, 16)
+		net.WriteUInt(self.nextGreenZoneReduce, 32)
 	net.Broadcast()
 
 	self.roundState = state

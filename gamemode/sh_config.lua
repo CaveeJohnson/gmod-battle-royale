@@ -32,7 +32,7 @@ GM.Config.ReduceGreenzoneTime = 60
 GM.Config.DefaultGZRadius = 1500
 
 -- 15 mins divided by the interval
-GM.Config.RoundTargetTime = (15 * 60) / GM.Config.ReduceGreenzoneTime
+GM.Config.RoundTargetTime = (10 * 60) / GM.Config.ReduceGreenzoneTime
 
 GM.Config.LobbySpawns = {
 	["rp_stalker_v2"] = {

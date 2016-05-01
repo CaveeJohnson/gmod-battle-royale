@@ -5,11 +5,11 @@
 
 - MAIN
 [X] Round system
-[ ] Random Spawns
-[#] Lobby area
+[X] Random Spawns
+[X] Lobby area
 [ ] Weapons
 [ ] Misc. items
-[#] Green zone
+[X] Green zone
 [ ] Spectator mode
 
 
