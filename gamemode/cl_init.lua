@@ -12,6 +12,7 @@ end
 
 GM.Materials = GM.Materials or {Replaced = {}}
 local function materialReplace(from, to)
+	local GM = _G.GM or GAMEMODE
 	local mat = Material(from)
 
 	if not mat:IsError() then
@@ -36,11 +37,19 @@ local function materialReplace(from, to)
 	end
 end
 
+local replace = {
+	["IMS/BANNER"] = "METAL/METALFLOOR003A",
+}
+
 function GM:InitPostEntity()
-	materialReplace("IMS/BANNER","METAL/METALFLOOR003A")
+	for k, v in pairs(replace) do
+		materialReplace(k, v)
+	end
 end
 
-materialReplace("IMS/BANNER","METAL/METALFLOOR003A")
+for k, v in pairs(replace) do
+	materialReplace(k, v)
+end
 
 net.Receive("br_roundState", function()
 	GAMEMODE.roundState = net.ReadUInt(4)
