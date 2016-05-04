@@ -15,6 +15,7 @@ do
 
 	util.AddNetworkString("br_playerDeath")
 	util.AddNetworkString("br_victor")
+	util.AddNetworkString("br_participating")
 end
 
 -- Called when the server initializes.

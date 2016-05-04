@@ -8,6 +8,8 @@ if GM.nextRoundState then
 	GM.greenzoneRadius = 100
 
 	GM.lastVictor = game.GetWorld()
+
+	GM.currentlyParticipating = {}
 end
 
 GM.Materials = GM.Materials or {Replaced = {}}
@@ -65,8 +67,37 @@ end)
 
 net.Receive("br_victor", function()
 	GAMEMODE.lastVictor = net.ReadEntity()
-	print("victor!!!! = ", GAMEMODE.lastVictor)
 end)
+
+net.Receive("br_participating", function()
+	GAMEMODE.currentlyParticipating = net.ReadTable()
+end)
+
+function GM:PlayersLeft()
+	local t = table.Copy(self.currentlyParticipating)
+	for k, v in ipairs(t) do
+		if not v:Alive() or v:Team() ~= TEAM_ALIVE then
+			table.remove(t, k)
+		end
+	end
+
+	return #t
+end
+
+surface.CreateFont("br_cssIcons", {
+	font = "csd",
+	size = 20,
+})
+
+function GM:GetWeaponIcon(wep)
+	local c = wep:GetClass()
+	if c == "weapon_pistol" then
+		return "-" , "HL2MPTypeDeath"
+	end
+
+	-- At this point we assume it has a CSS weapon icon
+	return wep.IconLetter, "br_cssIcons"
+end
 
 local hudFont = "br_hud"
 surface.CreateFont(hudFont, {
@@ -79,6 +110,11 @@ surface.CreateFont(hudFont .. "_small", {
 	size = 28,
 })
 
+surface.CreateFont(hudFont .. "_vsmall", {
+	font = "Tahoma",
+	size = 21,
+})
+
 function GM:HUDShouldDraw(name)
 	if name == "CHudHealth" or name == "CHudBattery" or name == "CHudSuitPower" or  name == "CHudAmmo" or name == "CHudSecondaryAmmo" then
 		return false
@@ -88,9 +124,12 @@ function GM:HUDShouldDraw(name)
 	return self.BaseClass:HUDShouldDraw(name)
 end
 
-local color_tblack = Color(0, 0, 0, 120)
+local color_tblack = Color(0, 0, 0, 180)
+local color_tgrey = Color(40, 40, 40, 80)
 local color_green = Color(100, 200, 100, 255)
 local color_red = Color(200, 100, 100, 255)
+local color_red2 = Color(200, 40, 40, 255)
+local color_blue = Color(60, 60, 200, 255)
 
 local startForm = "A new round will start %s, press %s to toggle entrance."
 local endForm = "The round has ended, %s."
@@ -100,23 +139,117 @@ local state_out = "You are currently set to not participate in this round."
 
 local reducing = "Green Zone Reducing:"
 
+function GM:DrawRect(x, y, w, h)
+	surface.SetDrawColor(color_tblack)
+	surface.DrawRect(x - 1, y - 1, w + 2, h + 2)
+
+	surface.SetDrawColor(color_tgrey)
+	surface.DrawRect(x + 2, y + 2, w - 4, h - 4)
+end
+
+local rounding = 2
+function GM:DrawRect2(x, y, w, h, c)
+	draw.RoundedBox(rounding, x - 1, y - 1, w + 2, h + 2, color_black)
+
+	draw.RoundedBox(rounding, x, y, w, h, c)
+end
+
+local ammoCount = {}
+local __w = 300
+local ___w = (__w / 2) - 10
+
 function GM:HUDPaint()
 	local ply = LocalPlayer()
+	local w, h, x, y, tw, th
 
 	if ply:Team() == TEAM_ALIVE then
 		if self.greenzoneRadius > 64 then
-			local x, y = 10, ScrH() - 10
 
-			surface.SetFont(hudFont .. "_small")
-			local w, h = surface.GetTextSize(reducing)
+			x, y = ScrW() - 10, ScrH() - 8
 
-			surface.SetDrawColor(color_tblack)
-			surface.DrawRect(x - 4, y - h * 2 + 2, w + 8, h * 2 + 2)
+			local wep = ply:GetActiveWeapon()
 
-			draw.SimpleTextOutlined(reducing, hudFont .. "_small", x, y - 22, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, color_black)
+			if wep and IsValid(wep) then
+				local ico, fon = self:GetWeaponIcon(wep)
+
+				w, h = ___w, 60
+
+				self:DrawRect(x - w - 4, y - h, w + 8, h)
+
+				local ammo
+
+				local class = wep:GetClass()
+				local clipOne = wep:Clip1()
+
+				if not ammoCount[class] then
+					ammoCount[class] = clipOne
+				end
+
+				-- Check if the weapon's first clip is bigger than the amount we have stored for clip one.
+				if clipOne > ammoCount[class] then
+					ammoCount[class] = clipOne
+				end
+
+				local clipMaximum = ammoCount[class]
+				local clipAmount = ply:GetAmmoCount(wep:GetPrimaryAmmoType())
+
+				ammo = clipOne .. " / " .. clipMaximum
+				tw, th = surface.GetTextSize(ammo)
+
+				draw.SimpleTextOutlined(ammo, hudFont, x - w + w / 2, y -  h / 2 - (h / 6), color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, color_black)
+
+				ammo = clipAmount
+				tw, th = surface.GetTextSize(ammo)
+
+				draw.SimpleTextOutlined(ammo, hudFont .. "_vsmall", x - w + w / 2, y - h + h / 2 + th / 2 + (h / 5), color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 1, color_black)
+
+				self:DrawRect(x - w * 2, y - h, w - 8, h)
+
+				if ico and fon then
+					tw, th = surface.GetTextSize(ico)
+
+					draw.SimpleTextOutlined(ico, fon, x - w * 2 + w / 2 - 2, y - h + h / 2 + th / 2 + 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, color_black)
+				end
+
+				y = y - h - 4
+			end
+
+			w, h = __w, 20
+			local d = w / 30
+
+			local r
+
+			self:DrawRect(x - w - 4, y - h, w + 8, h)
+
+			r = math.Clamp(ply:Armor() * 0.3, 0, 100)
+
+			for i = 0, r - 1 do
+				self:DrawRect2(x - w + math.floor(d * i) + 1, y - h + 2, d - 3, h - 4, color_blue)
+			end
+
+			y = y - h - 2
+			h = h * 1.42
+
+			self:DrawRect(x - w - 4, y - h, w + 8, h)
+
+			r = math.Clamp(ply:Health() * 0.3, 0, 100)
+
+			for i = 0, r - 1 do
+				self:DrawRect2(x - w + math.floor(d * i) + 1, y - h + 2, d - 3, h - 4, color_red2)
+			end
+
+			y = y - h - 2
 
 			local reducing_time = string.ToMinutesSeconds(math.max(self.nextGreenZoneReduce - CurTime(), 0))
-			draw.SimpleTextOutlined(reducing_time, hudFont .. "_small", x, y, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, color_black)
+			reducing_time = reducing .. "  " .. reducing_time
+
+			surface.SetFont(hudFont .. "_vsmall")
+			w, h = surface.GetTextSize(reducing_time)
+
+			y = y - h - 2
+
+			--self:DrawRect(x - ___w * 2 - 4, y, ___w * 2 + 8, h, color_tblack)
+			draw.SimpleTextOutlined(reducing_time, hudFont .. "_vsmall", x - ___w - 2, y + h / 2 - 1, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, color_black)
 
 			if not self:PlayerInGreenzone(ply) then
 				local text = "RETURN TO THE GREEN ZONE IMMEDIATELY!"
@@ -125,8 +258,7 @@ function GM:HUDPaint()
 				local w, h = surface.GetTextSize(text)
 				local x, y = ScrW() / 2, ScrH() / 2
 
-				surface.SetDrawColor(color_tblack)
-				surface.DrawRect(x - w / 2 - 4, y - h / 2, w + 8, h + 4)
+				self:DrawRect(x - w / 2 - 4, y - h / 2, w + 8, h + 4, color_tblack)
 
 				draw.SimpleTextOutlined(text, hudFont, x, y, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, color_black)
 			end
@@ -138,8 +270,7 @@ function GM:HUDPaint()
 				local w, h = surface.GetTextSize(text)
 				local x, y = ScrW() / 2, 200
 
-				surface.SetDrawColor(color_tblack)
-				surface.DrawRect(x - w / 2 - 4, y - h / 2, w + 8, h + 4)
+				self:DrawRect(x - w / 2 - 4, y - h / 2, w + 8, h + 4, color_tblack)
 
 				draw.SimpleTextOutlined(text, hudFont, x, y, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, color_black)
 			end
@@ -224,8 +355,8 @@ function GM:RenderScreenspaceEffects()
 		matColor:SetFloat("$pp_colour_mulg", 0)
 		matColor:SetFloat("$pp_colour_mulb", 0)
 		matColor:SetFloat("$pp_colour_brightness", 0)
-		matColor:SetFloat("$pp_colour_contrast", 0.65)
-		matColor:SetFloat("$pp_colour_colour", 0.45)
+		matColor:SetFloat("$pp_colour_contrast", 0.62)
+		matColor:SetFloat("$pp_colour_colour", 0.4)
 	render.SetMaterial(matColor)
 
 	render.DrawScreenQuad()

@@ -96,7 +96,11 @@ function GM:RoundTick()
 		local count = #part
 		if count < self.Config.MinimumPlayers then return end
 
-		print("state is ready, ACTUALLY STARTING")
+		self.currentlyParticipating = part
+
+		net.Start("br_participating")
+			net.WriteTable(part)
+		net.Broadcast()
 
 		self.nextGreenZoneReduce = CurTime() + self.Config.ReduceGreenzoneTime
 
@@ -145,6 +149,10 @@ function GM:SendRoundInfoToPlayer(ply)
 	net.Start("br_victor")
 		net.WriteEntity(self.prevVictor)
 	net.Send(ply)
+
+	net.Start("br_participating")
+		net.WriteTable(self.currentlyParticipating)
+	net.Broadcast()
 end
 
 function GM:SetRoundState(state, time)
